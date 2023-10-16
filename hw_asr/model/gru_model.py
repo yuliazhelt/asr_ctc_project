@@ -27,7 +27,6 @@ class GRULayer(nn.Module):
         )
 
     def forward(self, spectrogram : Tensor, spectrogram_length : Tensor, *args, **kwargs):
-
         spectrogram = F.relu(self.batch_norm(spectrogram))
         spectrogram = spectrogram.transpose(1, 2)
 
@@ -35,7 +34,7 @@ class GRULayer(nn.Module):
         outputs, hidden_states = self.gru(outputs)
         outputs, _ = pad_packed_sequence(outputs, batch_first=True)
 
-        return outputs
+        return outputs.transpose(1, 2)
 
 
 class GRUModel(nn.Module):
@@ -55,7 +54,7 @@ class GRUModel(nn.Module):
         for idx in range(num_rnn_layers):
             self.gru_layers.append(
                 GRULayer(
-                    n_feats=n_feats,
+                    n_feats=n_feats if idx == 0 else hidden_size,
                     hidden_size=hidden_size,
                     bidirectional=bidirectional,
                     dropout_p=dropout_p,
@@ -80,8 +79,9 @@ class GRUModel(nn.Module):
 
         for gru_layer in self.gru_layers:
             outputs = gru_layer(outputs, output_lengths)
+            print(outputs.shape)
 
-        outputs = self.head(outputs)
+        outputs = self.head(outputs.transpose(1, 2))
 
         return outputs
 
