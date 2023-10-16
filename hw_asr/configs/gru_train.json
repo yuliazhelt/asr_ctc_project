@@ -19,7 +19,7 @@
       "args": {
         "n_feats": 128,
         "hidden_size": 512,
-        "num_rnn_layers" : 1
+        "num_rnn_layers" : 2
       }
     },
     "data": {
@@ -81,11 +81,11 @@
     "lr_scheduler": {
       "type": "CosineAnnealingWarmRestarts",
       "args": {
-        "T_0": 300
+        "T_0": 2000
       }
     },
     "trainer": {
-      "epochs": 200,
+      "epochs": 600,
       "save_dir": "saved/",
       "save_period": 5,
       "verbosity": 2,
