@@ -55,9 +55,9 @@
         }
       },
     "optimizer": {
-      "type": "SGD",
+      "type": "AdamW",
       "args": {
-        "lr": 1e-2
+        "lr": 3e-4
       }
     },
     "loss": {
