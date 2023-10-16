@@ -19,7 +19,7 @@
       "args": {
         "n_feats": 128,
         "hidden_size": 512,
-        "num_rnn_layers" : 2
+        "num_rnn_layers" : 5
       }
     },
     "data": {
