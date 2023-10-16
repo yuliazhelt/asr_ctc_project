@@ -79,7 +79,6 @@ class GRUModel(nn.Module):
 
         for gru_layer in self.gru_layers:
             outputs = gru_layer(outputs, output_lengths)
-            print(outputs.shape)
 
         outputs = self.head(outputs.transpose(1, 2))
 
