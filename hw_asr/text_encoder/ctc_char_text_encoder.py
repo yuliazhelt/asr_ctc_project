@@ -3,8 +3,14 @@ from typing import List, NamedTuple
 import torch
 
 from .char_text_encoder import CharTextEncoder
-from ctcdecoder import beam_search
+from pyctcdecode import build_ctcdecoder
+import kenlm
 
+import os
+import wget
+
+import numpy as np
+import scipy
 
 class Hypothesis(NamedTuple):
     text: str
@@ -14,11 +20,32 @@ class Hypothesis(NamedTuple):
 class CTCCharTextEncoder(CharTextEncoder):
     EMPTY_TOK = "^"
 
-    def __init__(self, alphabet: List[str] = None):
+    def __init__(self, alphabet: List[str] = None, lm_path : str = None):
         super().__init__(alphabet)
         vocab = [self.EMPTY_TOK] + list(self.alphabet)
         self.ind2char = dict(enumerate(vocab))
         self.char2ind = {v: k for k, v in self.ind2char.items()}
+        # self.lm_model = None
+        # if lm_path:
+        #     self.lm = kenlm.LanguageModel(os.path.join(lm_path))
+        labels = ''.join(self.ind2char.values())
+
+        kenlm_model_path = '3-gram.pruned.1e-7.arpa.gz'
+        if not os.path.exists(kenlm_model_path):
+            print('Downloading pruned 3-gram model.')
+            lm_url = 'http://www.openslr.org/resources/11/3-gram.pruned.1e-7.arpa.gz'
+            kenlm_model_path = wget.download(lm_url)
+            print('Downloaded the 3-gram language model.')
+        else:
+            print('Pruned .arpa.gz already exists.')
+
+        self.decoder = build_ctcdecoder(
+            labels,
+            kenlm_model_path,
+            alpha=0.5,  # tuned on a val set 
+            beta=1.0,  # tuned on a val set 
+        )
+
 
     def ctc_decode(self, inds: List[int]) -> str:
         decoded_list = []
@@ -43,11 +70,5 @@ class CTCCharTextEncoder(CharTextEncoder):
         assert voc_size == len(self.ind2char)
         hypos: List[Hypothesis] = []
 
-        alphabet = ''.join(self.ind2char.values())
-        probs = probs.exp()
-        # probs = probs.cpu().detach().numpy()
-        print(beam_search(probs, alphabet, beam_size=beam_size, lm_model=self.lm, lm_alpha=0.2, lm_beta=0.0001))
-        res = beam_search(probs, alphabet, beam_size=beam_size, lm_model=self.lm, lm_alpha=0.2, lm_beta=0.0001)[0]
-        return res
-
-
+        decoded_beams = self.decoder.decode_beams(probs[:probs_length].detach().numpy(), beam_width=beam_size)
+        return [Hypothesis(text=decoded_beams[i][0], prob=np.exp(decoded_beams[i][3])) for i in range(len(decoded_beams))]

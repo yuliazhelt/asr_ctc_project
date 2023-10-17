@@ -1,5 +1,5 @@
 {
-    "name": "one_batch_test",
+    "name": "gru_train",
     "n_gpu": 1,
     "preprocessing": {
       "sr": 16000,
@@ -87,7 +87,7 @@
     "trainer": {
       "epochs": 600,
       "save_dir": "saved/",
-      "save_period": 5,
+      "save_period": 2,
       "verbosity": 2,
       "monitor": "min val_loss",
       "early_stop": 100,

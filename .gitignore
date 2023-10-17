@@ -2,3 +2,5 @@ saved/**/**
 venv/**/**
 data/**/**
 wandb/**/**
+3-gram.pruned.1e-7.arpa.gz
+output.json

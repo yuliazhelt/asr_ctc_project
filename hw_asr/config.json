@@ -1,5 +1,5 @@
 {
-  "name": "default_config",
+  "name": "one_batch_test",
   "n_gpu": 1,
   "preprocessing": {
     "sr": 16000,
@@ -23,77 +23,55 @@
   },
   "data": {
     "train": {
-      "batch_size": 50,
-      "num_workers": 5,
+      "batch_size": 10,
+      "num_workers": 0,
       "datasets": [
         {
           "type": "LibrispeechDataset",
           "args": {
-            "part": "train-clean-100",
+            "part": "dev-clean",
             "max_audio_length": 20.0,
-            "max_text_length": 200
-          },
-          "module": "hw_asr.models"
-        },
-        {
-          "type": "LibrispeechDataset",
-          "args": {
-            "part": "train-clean-360",
-            "max_audio_length": 20.0,
-            "max_text_length": 200
-          }
-        },
-        {
-          "type": "LibrispeechDataset",
-          "args": {
-            "part": "train-other-500",
-            "max_audio_length": 20.0,
-            "max_text_length": 200
+            "max_text_length": 200,
+            "limit": 10
           }
         }
       ]
     },
     "val": {
-      "batch_size": 30,
-      "num_workers": 5,
+      "batch_size": 10,
+      "num_workers": 0,
       "datasets": [
         {
           "type": "LibrispeechDataset",
           "args": {
-            "part": "dev-clean"
+            "part": "dev-clean",
+            "max_audio_length": 20.0,
+            "max_text_length": 200,
+            "limit": 10
           }
         }
       ]
     },
-    "test-other": {
-      "batch_size": 30,
-      "num_workers": 5,
+    "test": {
+      "batch_size": 10,
+      "num_workers": 0,
       "datasets": [
         {
           "type": "LibrispeechDataset",
           "args": {
-            "part": "test-other"
-          }
-        }
-      ]
-    },
-    "test-clean": {
-      "batch_size": 30,
-      "num_workers": 5,
-      "datasets": [
-        {
-          "type": "LibrispeechDataset",
-          "args": {
-            "part": "test-clean"
+            "part": "test-clean",
+            "max_audio_length": 20.0,
+            "max_text_length": 200,
+            "limit": 20
           }
         }
       ]
     }
   },
   "optimizer": {
-    "type": "Adam",
+    "type": "SGD",
     "args": {
-      "lr": 3e-4
+      "lr": 1e-2
     }
   },
   "loss": {
@@ -120,7 +98,7 @@
       "steps_per_epoch": 100,
       "epochs": 50,
       "anneal_strategy": "cos",
-      "max_lr": 3e-4,
+      "max_lr": 1e-2,
       "pct_start": 0.2
     }
   },
@@ -132,7 +110,7 @@
     "monitor": "min val_loss",
     "early_stop": 100,
     "visualize": "wandb",
-    "wandb_project": "dla_hw1_asr",
+    "wandb_project": "asr_project",
     "len_epoch": 100,
     "grad_norm_clip": 10
   }
