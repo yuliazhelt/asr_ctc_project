@@ -49,12 +49,13 @@ class GRUModel(nn.Module):
             dropout_p: float = 0.1,
     ):
         super(GRUModel, self).__init__()
+        self.linear1 = nn.Linear(in_features=n_feats, out_features=hidden_size)
         self.gru_layers = nn.ModuleList()
 
         for idx in range(num_rnn_layers):
             self.gru_layers.append(
                 GRULayer(
-                    n_feats=n_feats if idx == 0 else hidden_size,
+                    n_feats=hidden_size,
                     hidden_size=hidden_size,
                     bidirectional=bidirectional,
                     dropout_p=dropout_p,
@@ -75,10 +76,11 @@ class GRUModel(nn.Module):
 
     def forward(self, spectrogram : Tensor, spectrogram_length : Tensor, *args, **kwargs):
 
-        outputs, output_lengths = spectrogram, spectrogram_length
+        outputs = self.linear1(spectrogram.transpose(1, 2)).transpose(1, 2)
+        outputs = F.hardtanh(F.relu(outputs), 0, 20)
 
         for gru_layer in self.gru_layers:
-            outputs = gru_layer(outputs, output_lengths)
+            outputs = gru_layer(outputs, spectrogram_length)
 
         outputs = self.head(outputs.transpose(1, 2))
 
