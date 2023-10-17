@@ -51,11 +51,12 @@ class GRUModel(nn.Module):
         super(GRUModel, self).__init__()
         self.linear1 = nn.Linear(in_features=n_feats, out_features=hidden_size)
         self.gru_layers = nn.ModuleList()
+        gru_output_size = hidden_size << 1 if bidirectional else hidden_size
 
         for idx in range(num_rnn_layers):
             self.gru_layers.append(
                 GRULayer(
-                    n_feats=hidden_size,
+                    n_feats=gru_output_size if idx != 0 else hidden_size,
                     hidden_size=hidden_size,
                     bidirectional=bidirectional,
                     dropout_p=dropout_p,
