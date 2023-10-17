@@ -32,6 +32,7 @@ class Trainer(BaseTrainer):
             device,
             dataloaders,
             text_encoder,
+            resume_path=None,
             lr_scheduler=None,
             len_epoch=None,
             skip_oom=True,
@@ -58,6 +59,9 @@ class Trainer(BaseTrainer):
         self.evaluation_metrics = MetricTracker(
             "loss", *[m.name for m in self.metrics], writer=self.writer
         )
+        
+        if resume_path is not None:
+            self._resume_checkpoint(resume_path)
 
     @staticmethod
     def move_batch_to_device(batch, device: torch.device):
