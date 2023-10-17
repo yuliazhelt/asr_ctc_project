@@ -64,7 +64,7 @@ class GRUModel(nn.Module):
             )
 
         self.head = nn.Sequential(
-            nn.Linear(in_features=hidden_size, out_features=n_class)
+            nn.Linear(in_features=gru_output_size, out_features=n_class)
         )
 
     def __str__(self):
