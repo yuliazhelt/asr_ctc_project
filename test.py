@@ -151,16 +151,10 @@ if __name__ == "__main__":
     if args.device is not None:
         os.environ["CUDA_VISIBLE_DEVICES"] = args.device
 
-    # first, we need to obtain config with model parameters
-    # we assume it is located with checkpoint in the same folder
-    model_config = Path(args.resume).parent / "config.json"
-    with model_config.open() as f:
-        config = ConfigParser(json.load(f), resume=args.resume)
-
     # update with addition configs from `args.config` if provided
     if args.config is not None:
         with Path(args.config).open() as f:
-            config.config.update(json.load(f))
+            config = ConfigParser(json.load(f), resume=args.resume)
 
     # if `--test-data-folder` was provided, set it as a default test set
     if args.test_data_folder is not None:

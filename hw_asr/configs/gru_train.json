@@ -19,7 +19,7 @@
       "args": {
         "n_feats": 128,
         "hidden_size": 1024,
-        "num_rnn_layers" : 5,
+        "num_rnn_layers" : 7,
         "bidirectional" : true
       }
     },
@@ -31,7 +31,7 @@
           {
             "type": "LibrispeechDataset",
             "args": {
-              "part": "train-clean-100",
+              "part": "train-clean-300",
               "max_audio_length": 50.0,
               "max_text_length": 500,
               "limit": -1
@@ -88,7 +88,7 @@
     "trainer": {
       "epochs": 600,
       "save_dir": "saved/",
-      "save_period": 2,
+      "save_period": 9,
       "verbosity": 2,
       "monitor": "min val_loss",
       "early_stop": 100,
