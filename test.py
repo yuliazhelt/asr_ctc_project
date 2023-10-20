@@ -72,20 +72,21 @@ def main(config, out_file):
                     {
                         "ground_truth": batch["text"][i],
                         "pred_text_argmax": text_encoder.ctc_decode(argmax.cpu().numpy()),
-                        "pred_text_beam_search": text_encoder.ctc_beam_search(
+                        "pred_text_beam_search": text_encoder.ctc_decode_text(text_encoder.ctc_beam_search(
                             batch["probs"][i], batch["log_probs_length"][i], beam_size=100
-                        )[:10],
+                        )[0][0]),
                     }
                 )
                 metrics["WER (argmax)"] += calc_wer(results[i]["ground_truth"], results[i]["pred_text_argmax"])
                 metrics["CER (argmax)"] += calc_cer(results[i]["ground_truth"], results[i]["pred_text_argmax"])
                 metrics["WER (beam search + LM)"] += calc_wer(
                     results[i]["ground_truth"],
-                    results[i]["pred_text_beam_search"][0][0]
+                    results[i]["pred_text_beam_search"]
                 )
+                print(results[i]["ground_truth"], results[i]["pred_text_argmax"], results[i]["pred_text_beam_search"])
                 metrics["CER (beam search + LM)"] += calc_cer(
                     results[i]["ground_truth"],
-                    results[i]["pred_text_beam_search"][0][0]
+                    results[i]["pred_text_beam_search"]
                 )
     for key, num in metrics.items():
         print(key, num / len(results))

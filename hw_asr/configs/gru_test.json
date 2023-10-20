@@ -1,5 +1,5 @@
 {
-    "name": "gru_train",
+    "name": "gru_test",
     "n_gpu": 1,
     "preprocessing": {
       "sr": 16000,
@@ -19,27 +19,12 @@
       "args": {
         "n_feats": 128,
         "hidden_size": 1024,
-        "num_rnn_layers" : 7,
+        "num_rnn_layers" : 5,
         "bidirectional" : true
       }
     },
     "data": {
-      "train": {
-        "batch_size": 20,
-        "num_workers": 4,
-        "datasets": [
-          {
-            "type": "LibrispeechDataset",
-            "args": {
-              "part": "train-clean-360",
-              "max_audio_length": 50.0,
-              "max_text_length": 500,
-              "limit": -1000
-            }
-          }
-        ]
-      },
-      "val": {
+      "test": {
         "batch_size": 20,
         "num_workers": 4,
         "datasets": [
@@ -49,7 +34,7 @@
               "part": "test-clean",
               "max_audio_length": 50.0,
               "max_text_length": 500,
-              "limit": -1
+              "limit": 20
             }
           }
         ]
@@ -88,7 +73,7 @@
     "trainer": {
       "epochs": 600,
       "save_dir": "saved/",
-      "save_period": 9,
+      "save_period": 2,
       "verbosity": 2,
       "monitor": "min val_loss",
       "early_stop": 100,

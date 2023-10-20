@@ -30,7 +30,8 @@ class CTCCharTextEncoder(CharTextEncoder):
         #     self.lm = kenlm.LanguageModel(os.path.join(lm_path))
         labels = ''.join(self.ind2char.values())
 
-        kenlm_model_path = '3-gram.pruned.1e-7.arpa.gz'
+        kenlm_model_path = 'lowercase_3-gram.pruned.1e-7.arpa.gz'
+        unigram_path = 'librispeech-vocab.txt'
         if not os.path.exists(kenlm_model_path):
             print('Downloading pruned 3-gram model.')
             lm_url = 'http://www.openslr.org/resources/11/3-gram.pruned.1e-7.arpa.gz'
@@ -38,14 +39,36 @@ class CTCCharTextEncoder(CharTextEncoder):
             print('Downloaded the 3-gram language model.')
         else:
             print('Pruned .arpa.gz already exists.')
+        if not os.path.exists(unigram_path):
+            print('Downloading unigram list.')
+            unigram_url = 'http://www.openslr.org/resources/11/librispeech-vocab.txt'
+            unigram_path = wget.download(unigram_url)
+            print('Downloaded the unigram list.')
+        else:
+            print('unigram list already exists.')
+
+        with open(unigram_path) as f:
+          unigram_list = [t.lower() for t in f.read().strip().split("\n")]
 
         self.decoder = build_ctcdecoder(
             labels,
             kenlm_model_path,
-            alpha=0.5,  # tuned on a val set 
-            beta=1.0,  # tuned on a val set 
+            unigram_list,
+            alpha=0.7,  # tuned on a val set 
+            beta=3.0,  # tuned on a val set
         )
 
+    def ctc_decode_text(self, text: str) -> str:
+        decoded_list = []
+        last_char = self.EMPTY_TOK
+        for curr_char in text:
+            if curr_char == self.EMPTY_TOK:
+                last_char = curr_char
+                continue
+            if curr_char != last_char:
+                decoded_list.append(curr_char)
+            last_char = curr_char
+        return "".join(decoded_list)
 
     def ctc_decode(self, inds: List[int]) -> str:
         decoded_list = []
@@ -70,5 +93,5 @@ class CTCCharTextEncoder(CharTextEncoder):
         assert voc_size == len(self.ind2char)
         hypos: List[Hypothesis] = []
 
-        decoded_beams = self.decoder.decode_beams(probs[:probs_length].detach().numpy(), beam_width=beam_size)
-        return [Hypothesis(text=decoded_beams[i][0], prob=np.exp(decoded_beams[i][3])) for i in range(len(decoded_beams))]
+        decoded_beams = self.decoder.decode_beams(probs[:probs_length].detach().numpy(), beam_width=beam_size, token_min_logp=0)
+        return [Hypothesis(text=decoded_beams[i][0], prob=decoded_beams[i][3]) for i in range(len(decoded_beams))]
