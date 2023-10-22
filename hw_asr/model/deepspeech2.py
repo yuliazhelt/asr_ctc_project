@@ -12,27 +12,41 @@ class ConvDS2(nn.Module):
     ):
         super(ConvDS2, self).__init__()
         self.conv = nn.Sequential(
-            nn.Conv2d(in_channels=1, out_channels=32, kernel_size=(3, 3), stride=(2, 2)),
-            nn.BatchNorm2d(32)
+            nn.Conv2d(1, 32, kernel_size=(41, 11), stride=(2, 2)),
+            nn.BatchNorm2d(32),
+            nn.Hardtanh(0, 20),
+            nn.Conv2d(32, 32, kernel_size=(21, 11), stride=(2, 1)),
+            nn.BatchNorm2d(32),
+            nn.Hardtanh(0, 20),
         )
 
 
-    def forward(self, spectrogram : Tensor, spectrogram_length : Tensor, *args, **kwargs):
-        print(spectrogram.unsqueeze(1).shape)
+    def forward(self, spectrogram : Tensor,  spectrogram_length : Tensor, *args, **kwargs):
         outputs = self.conv(spectrogram.unsqueeze(1))
 
-        print(outputs.shape)
         bs, ch, n_feats_conv, length = outputs.size()
         outputs = outputs.permute(0, 3, 1, 2)
         outputs = outputs.view(bs, length, ch * n_feats_conv)
 
-        self.output_dim = ch * n_feats_conv
+        return outputs, self.transform_input_lengths(spectrogram_length)
 
-        print(outputs.shape)
-        
-        outputs = F.hardtanh(F.relu(outputs), 0, 20)
+    def transform_input_lengths(self, input_lengths: Tensor) -> Tensor:
+        """
+        Input length transformation function.
+        For example: if your NN transforms spectrogram of time-length `N` into an
+        output with time-length `N / 2`, then this function should return `input_lengths // 2`
+        """
+        input_lengths = ((input_lengths - 11) / 2 + 1).floor()
+        input_lengths = (input_lengths - 11) + 1
+        return input_lengths
 
-        return outputs
+    def get_output_dim(self, n_feats : int) -> int:
+        """
+        n_feats transformation function for conv layer output
+        """
+        n_feats_out = int((n_feats - 41) / 2 + 1)
+        n_feats_out = int((n_feats_out - 21) / 2 + 1)
+        return 32 * n_feats_out
 
 
 class DeepSpeech2(nn.Module):
@@ -47,16 +61,15 @@ class DeepSpeech2(nn.Module):
             dropout_p: float = 0.1,
     ):
         super(DeepSpeech2, self).__init__()
-        self.linear = nn.Linear(in_features=n_feats, out_features=hidden_size)
         self.conv = ConvDS2()
 
         self.gru_layers = nn.ModuleList()
-        gru_output_size = hidden_size << 1 if bidirectional else hidden_size
+        gru_output_size = hidden_size * 2 if bidirectional else hidden_size
 
         for idx in range(num_rnn_layers):
             self.gru_layers.append(
                 GRULayer(
-                    n_feats=gru_output_size if idx != 0 else 32, #?
+                    n_feats=gru_output_size if idx != 0 else self.conv.get_output_dim(n_feats=n_feats), #? conv output
                     hidden_size=hidden_size,
                     bidirectional=bidirectional,
                     dropout_p=dropout_p,
@@ -76,14 +89,10 @@ class DeepSpeech2(nn.Module):
         return super().__str__() + "\nTrainable parameters: {}".format(params)
 
     def forward(self, spectrogram : Tensor, spectrogram_length : Tensor, *args, **kwargs):
-
-        outputs = self.linear(spectrogram.transpose(1, 2)).transpose(1, 2)
-        outputs = F.hardtanh(F.relu(outputs), 0, 20)
-
-        outputs = self.conv(outputs)
-
+        outputs, outputs_length = self.conv(spectrogram, spectrogram_length)
+        outputs = outputs.transpose(1, 2)
         for gru_layer in self.gru_layers:
-            outputs = gru_layer(outputs, spectrogram_length)
+            outputs = gru_layer(outputs, outputs_length)
 
         outputs = self.head(outputs.transpose(1, 2))
 
