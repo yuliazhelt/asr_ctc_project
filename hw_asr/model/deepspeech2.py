@@ -37,7 +37,7 @@ class ConvDS2(nn.Module):
         output with time-length `N / 2`, then this function should return `input_lengths // 2`
         """
         input_lengths = ((input_lengths - 11) / 2 + 1).floor()
-        input_lengths = (input_lengths - 11) + 1
+        input_lengths = ((input_lengths - 11) + 1).int()
         return input_lengths
 
     def get_output_dim(self, n_feats : int) -> int:
