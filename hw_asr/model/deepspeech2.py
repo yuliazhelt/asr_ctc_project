@@ -104,4 +104,4 @@ class DeepSpeech2(nn.Module):
         For example: if your NN transforms spectrogram of time-length `N` into an
             output with time-length `N / 2`, then this function should return `input_lengths // 2`
         """
-        return input_lengths
+        return self.conv.transform_input_lengths(input_lengths)
