@@ -34,7 +34,8 @@
               "part": "train-clean-360",
               "max_audio_length": 50.0,
               "max_text_length": 500,
-              "limit": -1
+              "limit": -1,
+              "data_dir": "/kaggle/input/librispeech-clean/LibriSpeech/"
             }
           }
         ]
@@ -49,7 +50,8 @@
               "part": "test-clean",
               "max_audio_length": 50.0,
               "max_text_length": 500,
-              "limit": -1
+              "limit": -1,
+              "data_dir": "/kaggle/input/librispeech-clean/LibriSpeech/"
             }
           }
         ]
