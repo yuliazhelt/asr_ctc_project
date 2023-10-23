@@ -18,7 +18,7 @@
       "type": "DeepSpeech2",
       "args": {
         "n_feats": 128,
-        "hidden_size": 1024,
+        "hidden_size": 1510,
         "num_rnn_layers" : 5,
         "bidirectional" : true
       }
@@ -88,7 +88,7 @@
     "trainer": {
       "epochs": 600,
       "save_dir": "saved/",
-      "save_period": 2,
+      "save_period": 9,
       "verbosity": 2,
       "monitor": "min val_loss",
       "early_stop": 100,
