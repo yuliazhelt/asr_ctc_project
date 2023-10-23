@@ -5,6 +5,7 @@ import torch
 from .char_text_encoder import CharTextEncoder
 from pyctcdecode import build_ctcdecoder
 import kenlm
+from collections import defaultdict
 
 import os
 import wget
@@ -48,7 +49,7 @@ class CTCCharTextEncoder(CharTextEncoder):
             print('unigram list already exists.')
 
         with open(unigram_path) as f:
-          unigram_list = [t.lower() for t in f.read().strip().split("\n")]
+            unigram_list = [t.lower() for t in f.read().strip().split("\n")]
 
         self.decoder = build_ctcdecoder(
             labels,
@@ -93,5 +94,33 @@ class CTCCharTextEncoder(CharTextEncoder):
         assert voc_size == len(self.ind2char)
         hypos: List[Hypothesis] = []
 
-        decoded_beams = self.decoder.decode_beams(probs[:probs_length].detach().numpy(), beam_width=beam_size, token_min_logp=0)
+        decoded_beams = self.decoder.decode_beams(probs[:probs_length].detach().numpy(), beam_width=beam_size, token_min_logp=-1)
         return [Hypothesis(text=decoded_beams[i][0], prob=decoded_beams[i][3]) for i in range(len(decoded_beams))]
+
+    def ctc_beam_search_custom(self, probs: torch.tensor, probs_length, beam_size: int = 100):
+        state = {('',  self.EMPTY_TOK): 1.0}
+        for frame in probs:
+            state = self.extend_and_merge(frame, state)
+            state = self.truncate(state, beam_size)
+        return [Hypothesis(text=v[0][0], prob=v[-1]) for v in list(state.items())]
+
+    def extend_and_merge(self, frame, state):
+        new_state = defaultdict(float)
+        for next_char_index, next_char_proba in enumerate(frame):
+            for (pref, last_char), pref_proba in state.items():
+                next_char = self.ind2char[next_char_index]
+                if next_char == last_char:
+                    new_pref = pref
+                else:
+                    if next_char != self.EMPTY_TOK:
+                        new_pref = pref + next_char
+                    else:
+                        new_pref = pref
+                last_char = next_char
+                new_state[(new_pref, last_char)] += pref_proba * next_char_proba
+        return new_state
+
+    def truncate(self, state, beam_size):
+        state_list = list(state.items())
+        state_list.sort(key=lambda x: -x[1])
+        return dict(state_list[:beam_size])
