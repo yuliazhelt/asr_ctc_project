@@ -25,13 +25,17 @@ URL_LINKS = {
 
 
 class LibrispeechDataset(BaseDataset):
-    def __init__(self, part, data_dir=None, *args, **kwargs):
+    def __init__(self, part, data_dir=None, source_dir=None, kaggle=False, *args, **kwargs):
         assert part in URL_LINKS or part == 'train_all'
-
+        self.kaggle = kaggle
         if data_dir is None:
             data_dir = ROOT_PATH / "data" / "datasets" / "librispeech"
             data_dir.mkdir(exist_ok=True, parents=True)
         self._data_dir = Path(data_dir)
+        if not kaggle:
+            self._source_dir = self._data_dir
+        else:
+            self._source_dir = Path(source_dir)           
         if part == 'train_all':
             index = sum([self._get_or_load_index(part)
                          for part in URL_LINKS if 'train' in part], [])
@@ -41,11 +45,15 @@ class LibrispeechDataset(BaseDataset):
         super().__init__(index, *args, **kwargs)
 
     def _load_part(self, part):
-        arch_path = self._data_dir / f"{part}.tar.gz"
-        print(f"Loading part {part}")
-        download_file(URL_LINKS[part], arch_path)
-        shutil.unpack_archive(arch_path, self._data_dir)
-        for fpath in (self._data_dir / "LibriSpeech").iterdir():
+        if not self.kaggle:
+            arch_path = self._data_dir / f"{part}.tar.gz"
+            print(f"Loading part {part}")
+            download_file(URL_LINKS[part], arch_path)
+            shutil.unpack_archive(arch_path, self._data_dir)
+            source_dir = self._source_dir
+        else:
+            source_dir = self._source_dir / f"{part}"
+        for fpath in (source_dir / "LibriSpeech").iterdir():
             shutil.move(str(fpath), str(self._data_dir / fpath.name))
         os.remove(str(arch_path))
         shutil.rmtree(str(self._data_dir / "LibriSpeech"))
