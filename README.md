@@ -30,6 +30,7 @@ CER (argmax) 0.0693261912516432
 WER (beam search + LM) 0.068444553594604
 CER (beam search + LM) 0.025498943780145625
 ```
+Custom beam search slow, adds only 5% on average
 
 LibriSpeech __test-other__:
 ```
