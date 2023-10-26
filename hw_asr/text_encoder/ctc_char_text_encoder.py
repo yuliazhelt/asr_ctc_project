@@ -8,7 +8,7 @@ import kenlm
 from collections import defaultdict
 
 import os
-
+import heapq
 import numpy as np
 import scipy
 
@@ -97,20 +97,17 @@ class CTCCharTextEncoder(CharTextEncoder):
     def extend_and_merge(self, frame, state):
         new_state = defaultdict(float)
         for next_char_index, next_char_proba in enumerate(frame):
+            next_char = self.ind2char[next_char_index]
             for (pref, last_char), pref_proba in state.items():
-                next_char = self.ind2char[next_char_index]
-                if next_char == last_char:
+                if next_char == last_char or next_char == self.EMPTY_TOK:
                     new_pref = pref
                 else:
-                    if next_char != self.EMPTY_TOK:
-                        new_pref = pref + next_char
-                    else:
-                        new_pref = pref
-                last_char = next_char
-                new_state[(new_pref, last_char)] += pref_proba * next_char_proba
+                    new_pref = pref + next_char
+                new_state[(new_pref, next_char)] += pref_proba * next_char_proba
         return new_state
-
+    
     def truncate(self, state, beam_size):
         state_list = list(state.items())
-        state_list.sort(key=lambda x: -x[1])
-        return dict(state_list[:beam_size])
+        heapq.heapify(state_list)  # Convert to a min-heap
+        top_items = heapq.nlargest(beam_size, state_list, key=lambda x: x[1])
+        return dict(top_items)
