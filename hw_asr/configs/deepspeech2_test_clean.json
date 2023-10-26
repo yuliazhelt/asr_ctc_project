@@ -1,5 +1,5 @@
 {
-    "name": "deepspeech2_train",
+    "name": "deepspeech2_test_clean",
     "n_gpu": 1,
     "preprocessing": {
       "sr": 16000,
@@ -24,36 +24,6 @@
       }
     },
     "data": {
-      "train": {
-        "batch_size": 20,
-        "num_workers": 4,
-        "datasets": [
-          {
-            "type": "LibrispeechDataset",
-            "args": {
-              "part": "train-other-500",
-              "max_audio_length": 50.0,
-              "max_text_length": 500,
-              "limit": -1
-            }
-          }
-        ]
-      },
-      "val": {
-        "batch_size": 20,
-        "num_workers": 4,
-        "datasets": [
-          {
-            "type": "LibrispeechDataset",
-            "args": {
-              "part": "test-clean",
-              "max_audio_length": 50.0,
-              "max_text_length": 500,
-              "limit": -1
-            }
-          }
-        ]
-      },
       "test": {
         "batch_size": 20,
         "num_workers": 4,
@@ -61,9 +31,7 @@
           {
             "type": "LibrispeechDataset",
             "args": {
-              "part": "test-other",
-              "max_audio_length": 50.0,
-              "max_text_length": 500,
+              "part": "test-clean",
               "limit": -1
             }
           }
@@ -110,7 +78,7 @@
       "visualize": "wandb",
       "wandb_project": "asr_project",
       "len_epoch": 100,
-      "grad_norm_clip": 10,
-      "resume": "model_best.pth"
+      "grad_norm_clip": 10
     }
   }
+  
