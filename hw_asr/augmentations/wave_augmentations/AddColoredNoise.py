@@ -4,7 +4,7 @@ from torch import Tensor
 from hw_asr.augmentations.base import AugmentationBase
 
 class AddColoredNoise(AugmentationBase):
-    def __init__(self, p, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         self._aug = torch_audiomentations.AddColoredNoise(*args, **kwargs)
 
     def __call__(self, data: Tensor):

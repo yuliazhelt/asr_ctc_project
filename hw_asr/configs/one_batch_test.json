@@ -11,7 +11,29 @@
     "log_spec": true
   },
   "augmentations": {
-    "wave": [],
+    "wave": [
+      {
+        "type": "PolarityInversion",
+        "args": {
+          "p": 0.4
+        }
+      },
+      {
+        "type": "AddColoredNoise",
+        "args": {
+          "p": 0.5,
+          "sample_rate" : 16000
+        }
+      },
+      {
+        "type": "Loudness",
+        "args": {
+          "p": 0.6,
+          "min_top": 0.3,
+          "max_top": 1.2
+        }
+      }
+    ],
     "spectrogram": []
   },
   "arch": {
