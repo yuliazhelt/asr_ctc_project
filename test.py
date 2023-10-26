@@ -2,7 +2,7 @@ import argparse
 import json
 import os
 from pathlib import Path
-
+import numpy as np
 import torch
 from tqdm import tqdm
 
@@ -15,6 +15,12 @@ from hw_asr.metric.utils import calc_wer, calc_cer
 
 DEFAULT_CHECKPOINT_PATH = ROOT_PATH / "default_test_model" / "checkpoint.pth"
 
+# fix random seeds for reproducibility
+SEED = 123
+torch.manual_seed(SEED)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+np.random.seed(SEED)
 
 def main(config, out_file):
     logger = config.get_logger("test")
@@ -47,6 +53,8 @@ def main(config, out_file):
     metrics = {
         "WER (argmax)": 0,
         "CER (argmax)": 0,
+#         "WER (beam search custom)": 0,
+#         "CER (beam search custom)": 0,
         "WER (beam search + LM)": 0,
         "CER (beam search + LM)": 0
     }
@@ -72,20 +80,33 @@ def main(config, out_file):
                     {
                         "ground_truth": batch["text"][i],
                         "pred_text_argmax": text_encoder.ctc_decode(argmax.cpu().numpy()),
-                        "pred_text_beam_search": text_encoder.ctc_decode_text(text_encoder.ctc_beam_search(
-                            batch["probs"][i], batch["log_probs_length"][i], beam_size=100
-                        )[0][0]),
+                        "pred_text_beam_search": text_encoder.ctc_beam_search(
+                            batch["log_probs"][i],
+                            batch["log_probs_length"][i],
+                            beam_size=100
+                        )[0].text
+
+#                         "pred_text_beam_search_custom": text_encoder.ctc_decode_text(text_encoder.ctc_beam_search_custom(
+#                             batch["probs"][i], batch["log_probs_length"][i], beam_size=100
+#                         )[0][0]),
                     }
                 )
-                metrics["WER (argmax)"] += calc_wer(results[i]["ground_truth"], results[i]["pred_text_argmax"])
-                metrics["CER (argmax)"] += calc_cer(results[i]["ground_truth"], results[i]["pred_text_argmax"])
+                metrics["WER (argmax)"] += calc_wer(results[i]["ground_truth"].strip().lower(), results[i]["pred_text_argmax"])
+                metrics["CER (argmax)"] += calc_cer(results[i]["ground_truth"].strip().lower(), results[i]["pred_text_argmax"])
+#                 metrics["WER (beam search custom)"] += calc_wer(
+#                     results[i]["ground_truth"],
+#                     results[i]["pred_text_beam_search_custom"]
+#                 )
+#                 metrics["CER (beam search custom)"] += calc_cer(
+#                     results[i]["ground_truth"],
+#                     results[i]["pred_text_beam_search_custom"]
+#                 )
                 metrics["WER (beam search + LM)"] += calc_wer(
-                    results[i]["ground_truth"],
+                    results[i]["ground_truth"].strip().lower(),
                     results[i]["pred_text_beam_search"]
                 )
-                print(results[i]["ground_truth"], results[i]["pred_text_argmax"], results[i]["pred_text_beam_search"])
                 metrics["CER (beam search + LM)"] += calc_cer(
-                    results[i]["ground_truth"],
+                    results[i]["ground_truth"].strip().lower(),
                     results[i]["pred_text_beam_search"]
                 )
     for key, num in metrics.items():
