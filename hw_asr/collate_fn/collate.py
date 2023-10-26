@@ -4,7 +4,7 @@ from collections import defaultdict
 
 import torch
 from torch.nn.utils.rnn import pad_sequence
-
+import random
 logger = logging.getLogger(__name__)
 
 
@@ -24,7 +24,8 @@ def collate_fn(dataset_items: List[dict]):
 
         result_batch_list['text'].append(item['text'])
         result_batch_list['audio_path'].append(item['audio_path'])
-        
+
+    result_batch['audio_sample'] = random.choice(dataset_items)['audio'].cpu()
     
     result_batch['text_encoded_length'] = torch.tensor(result_batch_list['text_encoded_length'])
     result_batch['spectrogram_length'] = torch.tensor(result_batch_list['spectrogram_length'])
