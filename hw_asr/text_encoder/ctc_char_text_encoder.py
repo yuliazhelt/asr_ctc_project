@@ -89,9 +89,10 @@ class CTCCharTextEncoder(CharTextEncoder):
 
     def ctc_beam_search_custom(self, probs: torch.tensor, probs_length, beam_size: int = 100):
         state = {('',  self.EMPTY_TOK): 1.0}
-        for frame in probs:
+        for frame in probs[:probs_length]:
             state = self.extend_and_merge(frame, state)
             state = self.truncate(state, beam_size)
+            
         return [Hypothesis(text=v[0][0], prob=v[-1]) for v in list(state.items())]
 
     def extend_and_merge(self, frame, state):
