@@ -1,4 +1,6 @@
-# ASR project barebones
+# Automatic Speech Recognition project
+
+Based on [Deep Speech 2](https://arxiv.org/abs/1512.02595) implementation
 
 ## Installation guide
 
